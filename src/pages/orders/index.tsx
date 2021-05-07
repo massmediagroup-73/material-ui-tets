@@ -1,8 +1,8 @@
 import React from 'react'
 import { Container } from '@material-ui/core'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
-import Logo from 'components/logo/logo'
-import EnhancedTable from 'components/table/table'
+import { Logo } from 'modules/logo'
+import EnhancedTable from 'modules/table/components/table/table'
 
 const useStyles = makeStyles((theme: Theme) => createStyles({
   logoWrapper: {
@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme: Theme) => createStyles({
 const Home = () => {
   const classes = useStyles()
   return (
-    <Container maxWidth="md">
+    <Container>
       <div className={classes.logoWrapper}>
         <Logo isHrCentered />
       </div>

@@ -1,9 +1,9 @@
 import React from 'react'
-import Home from 'screens/home'
+import Orders from 'pages/orders'
 
 function App() {
   return (
-    <Home />
+    <Orders />
   )
 }
 

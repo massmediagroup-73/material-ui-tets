@@ -1,7 +1,6 @@
-import React from 'react'
-import classnames from 'classnames'
+import React, { useEffect } from 'react'
 import {
-  createStyles, lighten, makeStyles, Theme,
+  createStyles, makeStyles,
 } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -11,51 +10,22 @@ import TableHead from '@material-ui/core/TableHead'
 import TablePagination from '@material-ui/core/TablePagination'
 import TableRow from '@material-ui/core/TableRow'
 import TableSortLabel from '@material-ui/core/TableSortLabel'
-import Toolbar from '@material-ui/core/Toolbar'
-import Typography from '@material-ui/core/Typography'
 import Paper from '@material-ui/core/Paper'
 import Checkbox from '@material-ui/core/Checkbox'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
-import DeleteIcon from '@material-ui/icons/Delete'
-import FilterListIcon from '@material-ui/icons/FilterList'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchOrders, ordersSelector, Order } from 'store/orders'
 
-interface Data {
-  calories: number;
-  carbs: number;
-  fat: number;
-  name: string;
-  protein: number;
+interface Row {
+  orderNumber: number
+  orderedDate: string
+  status: string
+  shippedDate: string
+  customerAddress: string
+  orderedValue: number
 }
-
-function createData(
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number,
-): Data {
-  return {
-    name, calories, fat, carbs, protein,
-  }
-}
-
-const rows = [
-  createData('Cupcake', 305, 3.7, 67, 4.3),
-  createData('Donut', 452, 25.0, 51, 4.9),
-  createData('Eclair', 262, 16.0, 24, 6.0),
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-  createData('Gingerbread', 356, 16.0, 49, 3.9),
-  createData('Honeycomb', 408, 3.2, 87, 6.5),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-  createData('Jelly Bean', 375, 0.0, 94, 0.0),
-  createData('KitKat', 518, 26.0, 65, 7.0),
-  createData('Lollipop', 392, 0.2, 98, 0.0),
-  createData('Marshmallow', 318, 0, 81, 2.0),
-  createData('Nougat', 360, 19.0, 9, 37.0),
-  createData('Oreo', 437, 18.0, 63, 4.0),
-]
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -67,10 +37,10 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   return 0
 }
 
-type Order = 'asc' | 'desc';
+type SortOrder = 'asc' | 'desc';
 
 function getComparator<Key extends keyof any>(
-  order: Order,
+  order: SortOrder,
   orderBy: Key,
 ): (a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number {
   return order === 'desc'
@@ -89,45 +59,41 @@ function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
 }
 
 interface HeadCell {
-  disablePadding: boolean;
-  id: keyof Data;
+  id: keyof Row;
   label: string;
   numeric: boolean;
 }
 
 const headCells: HeadCell[] = [
   {
-    id: 'name', numeric: false, disablePadding: true, label: 'Dessert (100g serving)',
+    id: 'orderNumber', numeric: false, label: 'ORDER NUMBER & DATE',
   },
   {
-    id: 'calories', numeric: true, disablePadding: false, label: 'Calories',
+    id: 'status', numeric: false, label: 'Shipping Status',
   },
   {
-    id: 'fat', numeric: true, disablePadding: false, label: 'Fat (g)',
+    id: 'shippedDate', numeric: false, label: 'CUSTOMER ADDRESS',
   },
   {
-    id: 'carbs', numeric: true, disablePadding: false, label: 'Carbs (g)',
-  },
-  {
-    id: 'protein', numeric: true, disablePadding: false, label: 'Protein (g)',
+    id: 'orderedDate', numeric: true, label: 'ORDER VALUE',
   },
 ]
 
 interface EnhancedTableProps {
   classes: ReturnType<typeof useStyles>;
   numSelected: number;
-  onRequestSort: (event: React.MouseEvent<unknown>, property: keyof Data) => void;
+  onRequestSort: (event: React.MouseEvent<unknown>, property: keyof Row) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  order: Order;
-  orderBy: string;
+  sortOrder: SortOrder;
+  sortOrderBy: string;
   rowCount: number;
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
   const {
-    classes, onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort,
+    classes, onSelectAllClick, sortOrder, sortOrderBy, numSelected, rowCount, onRequestSort,
   } = props
-  const createSortHandler = (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
+  const createSortHandler = (property: keyof Row) => (event: React.MouseEvent<unknown>) => {
     onRequestSort(event, property)
   }
 
@@ -146,92 +112,31 @@ function EnhancedTableHead(props: EnhancedTableProps) {
           <TableCell
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
-            padding={headCell.disablePadding ? 'none' : 'default'}
-            sortDirection={orderBy === headCell.id ? order : false}
+            sortDirection={sortOrderBy === headCell.id ? sortOrder : false}
           >
             <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
+              active={sortOrderBy === headCell.id}
+              direction={sortOrderBy === headCell.id ? sortOrder : 'asc'}
               onClick={createSortHandler(headCell.id)}
             >
               {headCell.label}
-              {orderBy === headCell.id ? (
+              {sortOrderBy === headCell.id ? (
                 <span className={classes.visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                  {sortOrder === 'desc' ? 'sorted descending' : 'sorted ascending'}
                 </span>
               ) : null}
             </TableSortLabel>
           </TableCell>
         ))}
-      </TableRow>
-    </TableHead>
-  )
-}
-
-const useToolbarStyles = makeStyles((theme: Theme) => createStyles({
-  root: {
-    paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(1),
-  },
-  highlight:
-      theme.palette.type === 'light'
-        ? {
-          color: theme.palette.secondary.main,
-          backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-        }
-        : {
-          color: theme.palette.text.primary,
-          backgroundColor: theme.palette.secondary.dark,
-        },
-  title: {
-    flex: '1 1 100%',
-  },
-}))
-
-interface EnhancedTableToolbarProps {
-  numSelected: number;
-}
-
-const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const classes = useToolbarStyles()
-  const { numSelected } = props
-
-  return (
-    <Toolbar
-      className={classnames(classes.root, {
-        [classes.highlight]: numSelected > 0,
-      })}
-    >
-      {numSelected > 0 ? (
-        <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
-          {numSelected} selected
-        </Typography>
-      ) : (
-        <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
-          Nutrition
-        </Typography>
-      )}
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton aria-label="delete">
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <>
-          <Tooltip title="Filter list">
-            <IconButton aria-label="filter list">
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
+        <TableCell align="right">
           <Tooltip title="More">
             <IconButton aria-label="more">
               <MoreVertIcon />
             </IconButton>
           </Tooltip>
-        </>
-      )}
-    </Toolbar>
+        </TableCell>
+      </TableRow>
+    </TableHead>
   )
 }
 
@@ -256,37 +161,81 @@ const useStyles = makeStyles(() => createStyles({
     top: 20,
     width: 1,
   },
+  tableCellData: {
+    display: 'block',
+    marginTop: '5px',
+    fontSize: '14px',
+    lineHeight: '17px',
+    letterSpacing: '0.05em',
+    color: '#6E6893',
+  },
+  tableCellData_bold: {
+    display: 'block',
+    fontWeight: 500,
+    fontSize: '14px',
+    lineHeight: '17px',
+    color: '#25213B',
+  },
 }))
 
 export default function EnhancedTable() {
+  const dispatch = useDispatch()
+  const { orders } = useSelector(ordersSelector)
+
+  useEffect(() => {
+    dispatch(fetchOrders())
+  }, [dispatch])
+
+  function createRow({
+    customer,
+    // eslint-disable-next-line camelcase
+    order_details,
+    // eslint-disable-next-line camelcase
+    order_number,
+    // eslint-disable-next-line camelcase
+    shipping_details,
+    status,
+  }: Order): Row {
+    return {
+      customerAddress: `${customer.address.line1} ${customer.address.city}, ${customer.address.state} ${customer.address.zip}`,
+      orderedDate: order_details.date,
+      orderedValue: order_details.value,
+      orderNumber: order_number,
+      shippedDate: shipping_details.date,
+      status,
+    }
+  }
+
+  const rows = orders.map((order: Order) => createRow(order))
+
   const classes = useStyles()
-  const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('calories')
-  const [selected, setSelected] = React.useState<string[]>([])
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('asc')
+  const [sortOrderBy, setSortOrderBy] = React.useState<keyof Row>('orderNumber')
+  const [selected, setSelected] = React.useState<number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
 
-  const handleRequestSort = (event: React.MouseEvent<unknown>, property: keyof Data) => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
+  const handleRequestSort = (event: React.MouseEvent<unknown>, property: keyof Row) => {
+    const isAsc = sortOrderBy === property && sortOrder === 'asc'
+    setSortOrder(isAsc ? 'desc' : 'asc')
+    setSortOrderBy(property)
   }
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map(n => n.name)
+      const newSelecteds = rows.map(n => n.orderNumber)
       setSelected(newSelecteds)
       return
     }
     setSelected([])
   }
 
-  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
-    const selectedIndex = selected.indexOf(name)
-    let newSelected: string[] = []
+  const handleClick = (event: React.MouseEvent<unknown>, orderNumber: number) => {
+    const selectedIndex = selected.indexOf(orderNumber)
+    let newSelected: number[] = []
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name)
+      newSelected = newSelected.concat(selected, orderNumber)
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1))
     } else if (selectedIndex === selected.length - 1) {
@@ -310,12 +259,12 @@ export default function EnhancedTable() {
     setPage(0)
   }
 
-  const isSelected = (name: string) => selected.indexOf(name) !== -1
+  const isSelected = (orderNumber: number) => selected.indexOf(orderNumber) !== -1
 
   return (
     <div className={classes.root}>
       <Paper className={classes.paper}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        {/* <EnhancedTableToolbar numSelected={selected.length} /> */}
         <TableContainer>
           <Table
             className={classes.table}
@@ -325,27 +274,27 @@ export default function EnhancedTable() {
             <EnhancedTableHead
               classes={classes}
               numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
+              sortOrder={sortOrder}
+              sortOrderBy={sortOrderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
               rowCount={rows.length}
             />
             <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
+              {stableSort(rows, getComparator(sortOrder, sortOrderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.name)
+                  const isItemSelected = isSelected(row.orderNumber)
                   const labelId = `enhanced-table-checkbox-${index}`
 
                   return (
                     <TableRow
                       hover
-                      onClick={event => handleClick(event, row.name)}
+                      onClick={event => handleClick(event, row.orderNumber)}
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.name}
+                      key={row.orderNumber}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">
@@ -354,13 +303,20 @@ export default function EnhancedTable() {
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </TableCell>
-                      <TableCell component="th" id={labelId} scope="row" padding="none">
-                        {row.name}
+                      <TableCell>
+                        <span className={classes.tableCellData_bold}># {row.orderNumber}</span>
+                        <span className={classes.tableCellData}>Ordered: {row.orderedDate}</span>
                       </TableCell>
-                      <TableCell align="right">{row.calories}</TableCell>
-                      <TableCell align="right">{row.fat}</TableCell>
-                      <TableCell align="right">{row.carbs}</TableCell>
-                      <TableCell align="right">{row.protein}</TableCell>
+                      <TableCell>{row.status}</TableCell>
+                      <TableCell>{row.customerAddress}</TableCell>
+                      <TableCell align="right">{row.orderedValue}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="More">
+                          <IconButton aria-label="more">
+                            <MoreVertIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   )
                 })}

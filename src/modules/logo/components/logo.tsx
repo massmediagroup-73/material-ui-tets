@@ -7,12 +7,10 @@ interface Props {
   isHrCentered?: boolean
 }
 
-const Logo = ({ isHrCentered }: Props): ReactElement => {
+export const Logo: React.FC<Props> = ({ isHrCentered }): ReactElement => {
   return (
     <div className={classnames(styles.logo, { [styles.logo_hrCenter]: isHrCentered })}>
       <img src={logo} alt="Mri online" />
     </div>
   )
 }
-
-export default Logo
