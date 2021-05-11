@@ -345,7 +345,7 @@ export default function EnhancedTable() {
 
   return (
     <div className={classes.root}>
-      <Paper className={classes.paper}>
+      <Paper className={classes.paper} elevation={2}>
         <TableContainer>
           <Table
             className={classes.table}
