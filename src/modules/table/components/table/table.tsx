@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { format } from 'date-fns'
 import {
   createStyles, makeStyles,
 } from '@material-ui/core/styles'
@@ -17,6 +18,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchOrders, ordersSelector, Order } from 'store/orders'
+import { Chip } from '@material-ui/core'
 
 interface Row {
   orderNumber: number
@@ -99,7 +101,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
   return (
     <TableHead>
-      <TableRow>
+      <TableRow className={classes.tableHeadRow}>
         <TableCell padding="checkbox">
           <Checkbox
             indeterminate={numSelected > 0 && numSelected < rowCount}
@@ -119,7 +121,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
               direction={sortOrderBy === headCell.id ? sortOrder : 'asc'}
               onClick={createSortHandler(headCell.id)}
             >
-              {headCell.label}
+              <span className={classes.tableHeadCell}>{headCell.label}</span>
               {sortOrderBy === headCell.id ? (
                 <span className={classes.visuallyHidden}>
                   {sortOrder === 'desc' ? 'sorted descending' : 'sorted ascending'}
@@ -140,6 +142,21 @@ function EnhancedTableHead(props: EnhancedTableProps) {
   )
 }
 
+const tableCellDataStyles = {
+  display: 'block',
+  marginTop: '5px',
+  fontSize: '14px',
+  lineHeight: '17px',
+  letterSpacing: '0.05em',
+  color: '#6E6893',
+}
+
+const tableCellDataSmallStyles = {
+  ...tableCellDataStyles,
+  fontSize: '12px',
+  lineHeight: '15px',
+}
+
 const useStyles = makeStyles(() => createStyles({
   root: {
     width: '100%',
@@ -149,6 +166,24 @@ const useStyles = makeStyles(() => createStyles({
   },
   table: {
     minWidth: 750,
+  },
+  tableHeadRow: {
+    backgroundColor: '#F4F2FF',
+  },
+  tableRow: {
+    '& td': {
+      paddingTop: '13px',
+      paddingBottom: '10px',
+    },
+  },
+  tableHeadCell: {
+    paddingTop: '14px',
+    paddingBottom: '11px',
+    fontWeight: 600,
+    fontSize: '12px',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    color: '#6E6893',
   },
   visuallyHidden: {
     border: 0,
@@ -161,20 +196,63 @@ const useStyles = makeStyles(() => createStyles({
     top: 20,
     width: 1,
   },
-  tableCellData: {
-    display: 'block',
-    marginTop: '5px',
-    fontSize: '14px',
-    lineHeight: '17px',
+  tableCellData: tableCellDataStyles,
+  tableCellDataBold: {
+    ...tableCellDataStyles,
+    marginTop: 0,
+    fontWeight: 500,
+    color: '#25213B',
+  },
+  tableCellDataSmall: tableCellDataSmallStyles,
+  tableCellDataBoldSmall: {
+    ...tableCellDataSmallStyles,
+    fontWeight: 500,
+  },
+  tableCellDataSmallBlack: {
+    ...tableCellDataSmallStyles,
+    marginTop: 0,
+    color: '#25213B',
+    fontWeight: 500,
+  },
+  tableChipLabelWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  tableChip: {
+    width: '88px',
+    height: '19px',
+    justifyContent: 'normal',
+    backgroundColor: '#E6E6F2',
+    '& span': {
+      paddingLeft: 0,
+    },
+  },
+  tableChipBullet: {
+    width: '6px',
+    height: '6px',
+    margin: '0 5px 0 5px',
+    borderRadius: '50%',
+    background: '#4A4AFF',
+  },
+  tableChipLabel: {
+    fontSize: '12px',
+    lineHeight: '1',
+    fontWeight: 500,
+    color: '#4A4AFF',
+  },
+  tableFooter: {
+    fontWeight: 600,
+    fontSize: '12px',
+    lineHeight: '15px',
     letterSpacing: '0.05em',
     color: '#6E6893',
+    backgroundColor: '#F4F2FF',
+    '& p': {
+      fontSize: '12px',
+    },
   },
-  tableCellData_bold: {
-    display: 'block',
-    fontWeight: 500,
-    fontSize: '14px',
-    lineHeight: '17px',
-    color: '#25213B',
+  textLetterSpacing_005em: {
+    letterSpacing: '0.05em',
   },
 }))
 
@@ -261,10 +339,13 @@ export default function EnhancedTable() {
 
   const isSelected = (orderNumber: number) => selected.indexOf(orderNumber) !== -1
 
+  const handleMoreButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+  }
+
   return (
     <div className={classes.root}>
       <Paper className={classes.paper}>
-        {/* <EnhancedTableToolbar numSelected={selected.length} /> */}
         <TableContainer>
           <Table
             className={classes.table}
@@ -290,6 +371,7 @@ export default function EnhancedTable() {
                   return (
                     <TableRow
                       hover
+                      className={classes.tableRow}
                       onClick={event => handleClick(event, row.orderNumber)}
                       role="checkbox"
                       aria-checked={isItemSelected}
@@ -304,15 +386,37 @@ export default function EnhancedTable() {
                         />
                       </TableCell>
                       <TableCell>
-                        <span className={classes.tableCellData_bold}># {row.orderNumber}</span>
-                        <span className={classes.tableCellData}>Ordered: {row.orderedDate}</span>
+                        <div>
+                          <span className={classes.tableCellDataBold}># {row.orderNumber}</span>
+                          <span className={classes.tableCellData}>Ordered: {format(Date.parse(row.orderedDate), 'MMM. dd, yyyy')}</span>
+                        </div>
                       </TableCell>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell>{row.customerAddress}</TableCell>
-                      <TableCell align="right">{row.orderedValue}</TableCell>
+                      <TableCell>
+                        <div>
+                          <Chip
+                            className={classes.tableChip}
+                            label={(
+                              <div className={classes.tableChipLabelWrapper}>
+                                <span className={classes.tableChipBullet} />
+                                <span className={classes.tableChipLabel}>{row.status}</span>
+                              </div>
+                            )}
+                          />
+                          <span className={classes.tableCellDataBoldSmall}>Updated: {format(Date.parse(row.shippedDate), 'dd/MMM/yyyy')}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={classes.tableCellDataSmallBlack}>
+                          {row.customerAddress}
+                        </span>
+                      </TableCell>
+                      <TableCell align="right">
+                        <span className={classes.tableCellDataBold}>${row.orderedValue}</span>
+                        <span className={classes.tableCellDataSmall}>USD</span>
+                      </TableCell>
                       <TableCell align="right">
                         <Tooltip title="More">
-                          <IconButton aria-label="more">
+                          <IconButton aria-label="more" onClick={handleMoreButtonClick}>
                             <MoreVertIcon />
                           </IconButton>
                         </Tooltip>
@@ -324,6 +428,7 @@ export default function EnhancedTable() {
           </Table>
         </TableContainer>
         <TablePagination
+          className={classes.tableFooter}
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
           count={rows.length}

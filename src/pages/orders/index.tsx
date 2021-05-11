@@ -1,13 +1,14 @@
 import React from 'react'
 import { Container } from '@material-ui/core'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
-import { Logo } from 'modules/logo'
 import EnhancedTable from 'modules/table/components/table/table'
+import Tabs from 'modules/tabs/tabs'
+import Title from 'modules/title/title'
 
 const useStyles = makeStyles((theme: Theme) => createStyles({
   logoWrapper: {
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(6.25),
+    marginBottom: theme.spacing(2.5),
   },
 }))
 
@@ -16,8 +17,11 @@ const Home = () => {
   return (
     <Container>
       <div className={classes.logoWrapper}>
-        <Logo isHrCentered />
+        <Title>
+          Orders
+        </Title>
       </div>
+      <Tabs />
       <EnhancedTable />
     </Container>
   )
