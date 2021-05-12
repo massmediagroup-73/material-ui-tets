@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { format } from 'date-fns'
 import {
-  createStyles, makeStyles,
+  makeStyles, Theme,
 } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -19,7 +19,7 @@ import MoreVertIcon from '@material-ui/icons/MoreVert'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchOrders, ordersSelector, Order } from 'store/orders'
 import { Chip } from '@material-ui/core'
-import { getComparator, stableSort, SortOrder } from 'modules/table/helpers/sorting'
+import { getComparator, stableSort, SortOrder } from 'modules/orders-table/helpers/sorting'
 
 interface Row {
   orderNumber: number
@@ -51,7 +51,7 @@ const headCells: HeadCell[] = [
   },
 ]
 
-interface EnhancedTableProps {
+interface OrdersTableProps {
   classes: ReturnType<typeof useStyles>;
   numSelected: number;
   onRequestSort: (event: React.MouseEvent<unknown>, property: keyof Row) => void;
@@ -61,7 +61,7 @@ interface EnhancedTableProps {
   rowCount: number;
 }
 
-function EnhancedTableHead(props: EnhancedTableProps) {
+function OrdersTableHead(props: OrdersTableProps) {
   const {
     classes, onSelectAllClick, sortOrder, sortOrderBy, numSelected, rowCount, onRequestSort,
   } = props
@@ -82,6 +82,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
         </TableCell>
         {headCells.map(headCell => (
           <TableCell
+            padding="none"
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             sortDirection={sortOrderBy === headCell.id ? sortOrder : false}
@@ -100,7 +101,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             </TableSortLabel>
           </TableCell>
         ))}
-        <TableCell align="right">
+        <TableCell align="right" padding="none" style={{ paddingRight: '16px' }}>
           <Tooltip title="More">
             <IconButton aria-label="more">
               <MoreVertIcon />
@@ -118,7 +119,6 @@ const tableCellDataStyles = {
   fontSize: '14px',
   lineHeight: '17px',
   letterSpacing: '0.05em',
-  color: '#6E6893',
 }
 
 const tableCellDataSmallStyles = {
@@ -127,7 +127,7 @@ const tableCellDataSmallStyles = {
   lineHeight: '15px',
 }
 
-const useStyles = makeStyles(() => createStyles({
+const useStyles = makeStyles((theme: Theme) => ({
   root: {
     width: '100%',
   },
@@ -138,7 +138,7 @@ const useStyles = makeStyles(() => createStyles({
     minWidth: 750,
   },
   tableHeadRow: {
-    backgroundColor: '#F4F2FF',
+    backgroundColor: theme.palette.secondary.light,
   },
   tableRow: {
     '& td': {
@@ -148,12 +148,12 @@ const useStyles = makeStyles(() => createStyles({
   },
   tableHeadCell: {
     paddingTop: '14px',
-    paddingBottom: '11px',
+    paddingBottom: '15px',
     fontWeight: 600,
     fontSize: '12px',
     letterSpacing: '0.05em',
     textTransform: 'uppercase',
-    color: '#6E6893',
+    color: theme.palette.primary.main,
   },
   visuallyHidden: {
     border: 0,
@@ -166,22 +166,29 @@ const useStyles = makeStyles(() => createStyles({
     top: 20,
     width: 1,
   },
-  tableCellData: tableCellDataStyles,
+  tableCellData: {
+    ...tableCellDataStyles,
+    color: theme.palette.primary.main,
+  },
   tableCellDataBold: {
     ...tableCellDataStyles,
     marginTop: 0,
     fontWeight: 500,
-    color: '#25213B',
+    color: theme.palette.secondary.main,
   },
-  tableCellDataSmall: tableCellDataSmallStyles,
+  tableCellDataSmall: {
+    ...tableCellDataSmallStyles,
+    color: theme.palette.primary.main,
+  },
   tableCellDataBoldSmall: {
     ...tableCellDataSmallStyles,
     fontWeight: 500,
+    color: theme.palette.primary.main,
   },
   tableCellDataSmallBlack: {
     ...tableCellDataSmallStyles,
     marginTop: 0,
-    color: '#25213B',
+    color: theme.palette.secondary.main,
     fontWeight: 500,
   },
   tableChipLabelWrapper: {
@@ -215,18 +222,28 @@ const useStyles = makeStyles(() => createStyles({
     fontSize: '12px',
     lineHeight: '15px',
     letterSpacing: '0.05em',
-    color: '#6E6893',
-    backgroundColor: '#F4F2FF',
-    '& p': {
-      fontSize: '12px',
+    color: theme.palette.primary.main,
+    backgroundColor: theme.palette.secondary.light,
+    '& .MuiTablePagination-selectRoot': {
+      marginRight: '39px',
     },
-  },
-  textLetterSpacing_005em: {
-    letterSpacing: '0.05em',
+    '& .MuiTablePagination-caption': {
+      fontWeight: 600,
+      fontSize: '12px',
+      lineHeight: '15px',
+      letterSpacing: '0.05em',
+      color: theme.palette.primary.main,
+    },
+    '& .MuiTablePagination-actions': {
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '105px',
+      marginLeft: '28px',
+    },
   },
 }))
 
-export default function EnhancedTable() {
+export default function OrdersTable() {
   const dispatch = useDispatch()
   const { orders } = useSelector(ordersSelector)
 
@@ -322,7 +339,7 @@ export default function EnhancedTable() {
             aria-labelledby="tableTitle"
             aria-label="enhanced table"
           >
-            <EnhancedTableHead
+            <OrdersTableHead
               classes={classes}
               numSelected={selected.length}
               sortOrder={sortOrder}

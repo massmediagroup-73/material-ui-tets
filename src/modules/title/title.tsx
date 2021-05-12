@@ -9,7 +9,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     lineHeight: '17px',
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
-    color: '#6E6893',
+    color: theme.palette.primary.main,
   },
 }))
 
