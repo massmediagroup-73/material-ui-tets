@@ -1,7 +1,7 @@
 import React from 'react'
 import { Container } from '@material-ui/core'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
-import EnhancedTable from 'modules/orders-table/components/table/table'
+import OrdersTable from 'modules/orders-table/components/table/table'
 import Tabs from 'modules/tabs/tabs'
 import Title from 'modules/title/title'
 
@@ -22,7 +22,7 @@ const Home = () => {
         </Title>
       </div>
       <Tabs />
-      <EnhancedTable />
+      <OrdersTable />
     </Container>
   )
 }
