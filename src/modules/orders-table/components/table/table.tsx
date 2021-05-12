@@ -245,7 +245,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export default function OrdersTable() {
   const dispatch = useDispatch()
-  const { orders } = useSelector(ordersSelector)
+  const { orders, meta } = useSelector(ordersSelector)
 
   function createRow({
     customer,
@@ -329,6 +329,18 @@ export default function OrdersTable() {
   useEffect(() => {
     dispatch(fetchOrders())
   }, [dispatch])
+
+  if (meta.isLoading) {
+    return <>Loading...</>
+  }
+
+  if (orders.length === 0 && !meta.isLoading) {
+    return <>No orders</>
+  }
+
+  if (meta.isError) {
+    return <>Error happened while fetching orders</>
+  }
 
   return (
     <div className={classes.root}>

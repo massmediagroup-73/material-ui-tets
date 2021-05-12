@@ -49,7 +49,7 @@ interface OrdersState {
 
 export const initialState: OrdersState = {
   meta: {
-    isLoading: false,
+    isLoading: true,
     isError: false,
   },
   orders: [],
